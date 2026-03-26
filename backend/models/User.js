@@ -7,9 +7,14 @@ export class User {
     this.email = userData.email;
     this.firstName = userData.first_name;
     this.lastName = userData.last_name;
-    this.role = userData.role;
+    this.role = userData.role || 'student';
     this.bio = userData.bio;
     this.avatarUrl = userData.avatar_url;
+    this.department = userData.department;
+    this.year = userData.year;
+    this.designation = userData.designation;
+    this.subjectExpertise = userData.subject_expertise;
+    this.subjectsHandled = userData.subjects_handled;
     this.emailVerified = userData.email_verified;
     this.isActive = userData.is_active;
     this.lastLogin = userData.last_login;
@@ -19,13 +24,21 @@ export class User {
 
   // Create a new user
   static async create(userData) {
-    const { username, email, passwordHash, firstName, lastName, bio } = userData;
-    
+    const {
+      username, email, passwordHash, firstName, lastName, bio,
+      role, department, year, designation, subjectExpertise, subjectsHandled
+    } = userData;
+
     const result = await query(
-      `INSERT INTO users (username, email, password_hash, first_name, last_name, bio)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (username, email, password_hash, first_name, last_name, bio,
+                          role, department, year, designation, subject_expertise, subjects_handled)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [username, email, passwordHash, firstName, lastName, bio]
+      [
+        username, email, passwordHash, firstName, lastName, bio,
+        role || 'student', department || null, year || null,
+        designation || null, subjectExpertise || null, subjectsHandled || null
+      ]
     );
 
     return new User(result.rows[0]);

@@ -1,8 +1,10 @@
 'use client'
 
 import React from 'react'
-import { Trophy, Target, Flame, Medal } from 'lucide-react'
+import { Trophy, Target, Flame, Medal, Shield, GraduationCap, BookOpen } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { cn } from '@/lib/utils'
+import type { UserRole } from '@/types'
 
 interface ProfileCardProps {
   id?: number
@@ -16,6 +18,25 @@ interface ProfileCardProps {
   answeredCount?: number
   avatar?: string
   createdAt?: string
+  role?: UserRole
+}
+
+const roleBadgeConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+  student: {
+    label: 'Student',
+    className: 'bg-blue-500/15 text-blue-400 border border-blue-500/25',
+    icon: BookOpen,
+  },
+  teaching_assistant: {
+    label: 'Teaching Assistant',
+    className: 'bg-purple-500/15 text-purple-400 border border-purple-500/25',
+    icon: Shield,
+  },
+  faculty: {
+    label: 'Faculty',
+    className: 'bg-amber-500/15 text-amber-400 border border-amber-500/25',
+    icon: GraduationCap,
+  },
 }
 
 export function ProfileCard({
@@ -27,14 +48,19 @@ export function ProfileCard({
   streakDays = 0,
   answeredCount = 0,
   avatar,
+  role = 'student',
 }: ProfileCardProps) {
-  const displayName = firstName && lastName 
-    ? `${firstName} ${lastName}` 
+  const displayName = firstName && lastName
+    ? `${firstName} ${lastName}`
     : username
 
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`
     : username.substring(0, 2).toUpperCase()
+
+  const badge = roleBadgeConfig[role] || roleBadgeConfig.student
+  const BadgeIcon = badge.icon
+
   return (
     <div className="bg-card border border-border rounded-lg p-5">
       <div className="flex items-center gap-3 mb-4">
@@ -51,6 +77,14 @@ export function ProfileCard({
             <span className="text-sm font-medium text-muted-foreground">{level} • {reputation.toLocaleString()} rep</span>
           </div>
         </div>
+      </div>
+
+      {/* Role Badge */}
+      <div className="mb-4">
+        <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold", badge.className)}>
+          <BadgeIcon className="w-3 h-3" />
+          {badge.label}
+        </span>
       </div>
 
       <div className="space-y-3">

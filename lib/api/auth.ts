@@ -21,7 +21,7 @@ class AuthService {
     return response.data!
   }
 
-  async register(userData: RegisterData): Promise<{ user: User; token: string }> {
+  async register(userData: RegisterData & { bio?: string }): Promise<{ user: User; token: string }> {
     const response = await httpClient.post<{ user: User; token: string }>(
       API_ENDPOINTS.auth.register,
       userData,

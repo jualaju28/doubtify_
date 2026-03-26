@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/use-toast'
+import type { UserRole } from '@/types'
 
 interface AuthModalProps {
   open: boolean
@@ -29,7 +31,13 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
     password: '',
     firstName: '',
     lastName: '',
-    bio: ''
+    bio: '',
+    role: 'student' as UserRole,
+    department: '',
+    year: '',
+    designation: '',
+    subjectExpertise: '',
+    subjectsHandled: '',
   })
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -49,33 +57,46 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
           description: 'You have been successfully logged in.'
         })
       } else {
-        await authService.register({
+        const registerPayload: Record<string, unknown> = {
           username: formData.username,
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          bio: formData.bio || undefined
-        })
+          bio: formData.bio || undefined,
+          role: formData.role,
+          department: formData.department || undefined,
+        }
+
+        if (formData.role === 'student') {
+          registerPayload.year = formData.year || undefined
+        }
+        if (formData.role === 'teaching_assistant') {
+          registerPayload.subjectExpertise = formData.subjectExpertise || undefined
+        }
+        if (formData.role === 'faculty') {
+          registerPayload.designation = formData.designation || undefined
+          registerPayload.subjectsHandled = formData.subjectsHandled
+            ? formData.subjectsHandled.split(',').map(s => s.trim()).filter(Boolean)
+            : undefined
+        }
+
+        await authService.register(registerPayload as Parameters<typeof authService.register>[0])
         toast({
           title: 'Welcome to Doubtify!',
           description: 'Your account has been created successfully.'
         })
       }
-      
+
       // Reset form
       setFormData({
-        username: '',
-        email: '',
-        password: '',
-        firstName: '',
-        lastName: '',
-        bio: ''
+        username: '', email: '', password: '', firstName: '', lastName: '', bio: '',
+        role: 'student', department: '', year: '', designation: '', subjectExpertise: '', subjectsHandled: '',
       })
-      
+
       onOpenChange(false)
       onSuccess?.()
-      
+
     } catch (error) {
       toast({
         title: 'Error',
@@ -94,16 +115,22 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
     }))
   }
 
+  const roleLabels: Record<UserRole, string> = {
+    student: 'Student',
+    teaching_assistant: 'Teaching Assistant',
+    faculty: 'Faculty',
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === 'login' ? 'Welcome Back' : 'Join Doubtify'}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'login' 
-              ? 'Sign in to your account to continue.' 
+            {mode === 'login'
+              ? 'Sign in to your account to continue.'
               : 'Create an account to start asking and answering doubts.'}
           </DialogDescription>
         </DialogHeader>
@@ -111,6 +138,26 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <>
+              {/* Role Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  I am a *
+                </label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(roleLabels) as UserRole[]).map(r => (
+                      <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label htmlFor="firstName" className="text-sm font-medium text-foreground">
@@ -186,20 +233,109 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
             />
           </div>
 
+          {/* Conditional fields based on role */}
           {mode === 'register' && (
-            <div className="space-y-2">
-              <label htmlFor="bio" className="text-sm font-medium text-foreground">
-                Bio (optional)
-              </label>
-              <Textarea
-                id="bio"
-                name="bio"
-                placeholder="Tell us a bit about yourself..."
-                value={formData.bio}
-                onChange={handleInputChange}
-                rows={3}
-              />
-            </div>
+            <>
+              {/* Department — all roles */}
+              <div className="space-y-2">
+                <label htmlFor="department" className="text-sm font-medium text-foreground">
+                  Department
+                </label>
+                <Input
+                  id="department"
+                  name="department"
+                  placeholder="e.g. Computer Science"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              {/* Student-only: Year */}
+              {formData.role === 'student' && (
+                <div className="space-y-2">
+                  <label htmlFor="year" className="text-sm font-medium text-foreground">
+                    Year
+                  </label>
+                  <Select
+                    value={formData.year}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, year: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1st">1st Year</SelectItem>
+                      <SelectItem value="2nd">2nd Year</SelectItem>
+                      <SelectItem value="3rd">3rd Year</SelectItem>
+                      <SelectItem value="4th">4th Year</SelectItem>
+                      <SelectItem value="5th">5th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* TA-only: Subject Expertise */}
+              {formData.role === 'teaching_assistant' && (
+                <div className="space-y-2">
+                  <label htmlFor="subjectExpertise" className="text-sm font-medium text-foreground">
+                    Subject Expertise *
+                  </label>
+                  <Input
+                    id="subjectExpertise"
+                    name="subjectExpertise"
+                    placeholder="e.g. Data Structures, Algorithms"
+                    value={formData.subjectExpertise}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Faculty-only: Designation & Subjects Handled */}
+              {formData.role === 'faculty' && (
+                <>
+                  <div className="space-y-2">
+                    <label htmlFor="designation" className="text-sm font-medium text-foreground">
+                      Designation *
+                    </label>
+                    <Input
+                      id="designation"
+                      name="designation"
+                      placeholder="e.g. Associate Professor"
+                      value={formData.designation}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="subjectsHandled" className="text-sm font-medium text-foreground">
+                      Subjects Handled
+                    </label>
+                    <Input
+                      id="subjectsHandled"
+                      name="subjectsHandled"
+                      placeholder="Comma-separated: OS, DBMS, Networks"
+                      value={formData.subjectsHandled}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <label htmlFor="bio" className="text-sm font-medium text-foreground">
+                  Bio (optional)
+                </label>
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  placeholder="Tell us a bit about yourself..."
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  rows={3}
+                />
+              </div>
+            </>
           )}
 
           <Button
@@ -207,7 +343,7 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange, onSuccess }:
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading 
+            {isLoading
               ? (mode === 'login' ? 'Signing In...' : 'Creating Account...')
               : (mode === 'login' ? 'Sign In' : 'Create Account')
             }

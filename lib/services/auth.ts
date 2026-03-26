@@ -37,6 +37,12 @@ export const authService = {
     firstName: string;
     lastName: string;
     bio?: string;
+    role?: string;
+    department?: string;
+    year?: string;
+    designation?: string;
+    subjectExpertise?: string;
+    subjectsHandled?: string[];
   }): Promise<AuthResponse> {
     const response = await apiRequest('/auth/register', {
       method: 'POST',

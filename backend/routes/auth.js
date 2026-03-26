@@ -62,7 +62,7 @@ export const register = async (req, res, next) => {
       });
     }
 
-    const { username, email, password, firstName, lastName, bio } = req.body;
+    const { username, email, password, firstName, lastName, bio, role, department, year, designation, subjectExpertise, subjectsHandled } = req.body;
 
     // Check if user already exists
     const existingUserByEmail = await User.findByEmail(email);
@@ -92,7 +92,13 @@ export const register = async (req, res, next) => {
       passwordHash,
       firstName,
       lastName,
-      bio: bio || null
+      bio: bio || null,
+      role: role || 'student',
+      department: department || null,
+      year: year || null,
+      designation: designation || null,
+      subjectExpertise: subjectExpertise || null,
+      subjectsHandled: subjectsHandled || null
     };
 
     const user = await User.create(userData);
@@ -175,7 +181,7 @@ export const login = async (req, res, next) => {
 export const getMe = async (req, res, next) => {
   try {
     const user = await User.findWithReputation(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,

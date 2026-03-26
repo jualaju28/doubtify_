@@ -1,10 +1,18 @@
+export type UserRole = 'student' | 'teaching_assistant' | 'faculty'
+
 export interface User {
   id: number
   username: string
   email: string
   firstName: string
   lastName: string
+  role: UserRole
   avatar?: string
+  department?: string
+  year?: string
+  designation?: string
+  subjectExpertise?: string
+  subjectsHandled?: string[]
   reputation?: {
     total: number
     streakDays: number
@@ -76,4 +84,10 @@ export interface RegisterData {
   password: string
   firstName: string
   lastName: string
+  role?: UserRole
+  department?: string
+  year?: string
+  designation?: string
+  subjectExpertise?: string
+  subjectsHandled?: string[]
 }
