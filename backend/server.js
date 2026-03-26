@@ -1,5 +1,5 @@
 import express from 'express';
-import cors from 'cors';
+
 import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -43,16 +43,7 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS configuration
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    process.env.FRONTEND_URL || 'http://localhost:3000'
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
